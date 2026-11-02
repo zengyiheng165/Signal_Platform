@@ -372,8 +372,17 @@ def _ensure_junction(alias, target, logger):
                 logger.warn("无法移除联接点 %s：%s" % (alias, exc))
                 return False
         else:
-            logger.warn("%s 已存在且不是联接点，改用直接路径" % alias)
-            return False
+            # 不是联接点的普通目录（常见于手工创建、或 Vitis 在联接点缺失时自己建的）
+            try:
+                if not os.listdir(alias):
+                    os.rmdir(alias)
+                    logger.info_detail("已移除同名空目录 %s" % alias)
+                else:
+                    logger.warn("%s 已存在且不是联接点，无法自动清理（里面还有文件）" % alias)
+                    return False
+            except Exception as exc:
+                logger.warn("处理同名目录 %s 失败：%s" % (alias, exc))
+                return False
     try:
         parent = os.path.dirname(alias)
         if parent and not os.path.isdir(parent):
@@ -441,11 +450,20 @@ def _alias_tag(project_root):
 
 
 def resolve_workspace(ctx, logger=None):
-    """确定 Vitis 实际使用的工作区路径；必要时走短路径联接点。"""
+    """确定 Vitis 实际使用的工作区路径；必要时走短路径联接点。
+
+    真实工作区仍然放在工程里（`board\\Vitis_WorkSpace`），
+    当路径过长/含特殊字符时，在 `<盘>:\\vws\\<工程名>_<短哈希>` 建一个
+    指向工程 `board` 目录的联接点，让 Vitis 通过短路径访问。
+
+    如果路径确实过长、又建立不了联接点，会把原因记到 ctx.workspace_blocked 里——
+    直接沿用长路径去建平台一定会编译失败，所以调用方应该拒绝继续。"""
     logger = logger or LOG
     requested = os.path.abspath(ctx.workspace)
     ctx.workspace_requested = requested
     ctx.xsa_effective = ctx.xsa
+    ctx.workspace_blocked = ""
+    ctx.workspace_link = ""
 
     need_alias = os.name == "nt" and (len(requested) > MAX_DIRECT_PATH
                                       or not _path_is_simple(requested))
@@ -460,6 +478,7 @@ def resolve_workspace(ctx, logger=None):
         logger.warn("工作区路径过长或含特殊字符，且找不到可用的短路径目录")
         ctx.workspace = requested
         ctx.workspace_alias = ""
+        ctx.workspace_blocked = "找不到可用的短路径目录（如 <盘>:\\vws）"
         _stage_xsa(ctx, logger)
         return requested
 
@@ -471,9 +490,9 @@ def resolve_workspace(ctx, logger=None):
     except Exception:
         pass
     if not _ensure_junction(alias, target, logger):
-        logger.warn("无法创建短路径联接点，将直接使用原路径")
         ctx.workspace = requested
-        ctx.workspace_alias = ""
+        ctx.workspace_alias = alias
+        ctx.workspace_blocked = alias
         _stage_xsa(ctx, logger)
         return requested
 
@@ -581,6 +600,8 @@ class Context(object):
             workspace or os.path.join(self.root, self.manifest.get("workspace") or DEFAULT_WORKSPACE))
         self.workspace_requested = self.workspace
         self.workspace_alias = ""
+        self.workspace_link = ""
+        self.workspace_blocked = ""
         self.marker_path = os.path.join(self.out_dir, MARKER_NAME)
         self.log_dir = os.path.join(self.out_dir, "logs")
 
@@ -1329,9 +1350,44 @@ def _apply_ld_script(ctx, component, logger):
 def _build(component, label, logger):
     logger.info("      正在编译 %s（可能需要几分钟）..." % label)
     try:
-        component.build()
+        status = component.build()
     except Exception as exc:
         raise RuntimeError("%s 编译失败：%s" % (label, exc))
+    if isinstance(status, int) and status != 0:
+        raise RuntimeError("%s 编译失败（Vitis 返回码 %d）" % (label, status))
+
+
+def _bsp_build_dirs(ctx):
+    """找到平台里各 domain 的 BSP 构建目录（.../bsp/libsrc/build_configs/gen_bsp）。"""
+    platform_dir = os.path.join(ctx.workspace, ctx.platform_name)
+    found = []
+    if not os.path.isdir(platform_dir):
+        return found
+    try:
+        domains = glob.glob(os.path.join(platform_dir, "*", "*"))
+    except Exception:
+        return found
+    for domain_dir in domains:
+        gen = os.path.join(domain_dir, "bsp", "libsrc", "build_configs", "gen_bsp")
+        if os.path.isdir(gen):
+            found.append(gen)
+    return found
+
+
+def _reset_bsp_build(ctx, logger):
+    """删掉 BSP 的 ninja 构建缓存，让它下次重新 configure。
+
+    Vitis 2026.1 的 BSP 构建用 `cmake --build .`，一旦 build.ninja 里引用的
+    CMakeFiles/rules.ninja 丢了，ninja 会先报“系统找不到指定的文件。”（GBK），
+    Vitis 的 helper 又用严格 UTF-8 解码这段输出，于是抛 UnicodeDecodeError，
+    最终只显示一句 `Error in generating platform "xxx".`。
+    这种情况下把 gen_bsp 清掉，下一次构建会重新跑 cmake configure。"""
+    removed = False
+    for gen in _bsp_build_dirs(ctx):
+        if _rmtree(gen, logger):
+            logger.ok("已清理 BSP 构建缓存：%s" % gen)
+            removed = True
+    return removed
 
 
 def _resolve_component(client, name, created, logger):
@@ -1501,7 +1557,19 @@ def phase_vitis(ctx, install, mode, args):
 
             step("编译平台（BSP / FSBL / xpfm）")
             platform_obj = _resolve_component(client, ctx.platform_name, created, LOG)
-            _build(platform_obj, "平台 " + ctx.platform_name, LOG)
+            try:
+                _build(platform_obj, "平台 " + ctx.platform_name, LOG)
+            except RuntimeError as exc:
+                LOG.warn("平台编译失败：%s" % exc)
+                LOG.info("这通常是 BSP 的 ninja 构建缓存坏了（CMakeFiles/rules.ninja 丢失），")
+                LOG.info("Vitis 又会把 ninja 的中文报错按 UTF-8 解码，最后只剩一句 "
+                         "Error in generating platform。")
+                if _reset_bsp_build(ctx, LOG):
+                    LOG.info("已清理 BSP 构建缓存，重试一次 ...")
+                    _build(platform_obj, "平台 " + ctx.platform_name, LOG)
+                else:
+                    LOG.error("没找到可清理的 BSP 构建缓存，请用 --clean 重新生成工作区。")
+                    return 1
             xpfm = os.path.join(ctx.workspace, ctx.platform_name, "export",
                                 ctx.platform_name, ctx.platform_name + ".xpfm")
             if not os.path.isfile(xpfm):
@@ -1609,6 +1677,25 @@ def phase_vitis(ctx, install, mode, args):
 # 把工作区里的源码同步回 src/ps
 # --------------------------------------------------------------------------- #
 
+def fix_bsp(ctx):
+    """只清理 BSP 的 ninja 构建缓存，不动源码和工程。
+
+    适用于：IDE 里点“编译平台”只报 `Error in generating platform 'xxx'.`
+    （真正原因是 ninja 找不到 CMakeFiles/rules.ninja，而这段中文报错又被
+    Vitis 按 UTF-8 解码，抛了 UnicodeDecodeError）。"""
+    dirs = _bsp_build_dirs(ctx)
+    if not dirs:
+        LOG.error("没找到 BSP 构建目录，工作区可能还没生成：%s" % ctx.workspace)
+        return 1
+    for gen in dirs:
+        if _rmtree(gen, LOG):
+            LOG.ok("已清理 BSP 构建缓存：%s" % gen)
+    LOG.raw("")
+    LOG.info("请重新编译：运行 build\\create_vitis_workspace.bat --sync，")
+    LOG.info("或在 Vitis IDE 里重新点一次“编译平台”。")
+    return 0
+
+
 def fix_sources(ctx):
     """把 src/ps 里硬编码绝对路径的 #include 改成文件名引用（原地修改）。"""
     changed = _sanitize_includes(ctx.src_dir, LOG, "src/ps")
@@ -1670,6 +1757,18 @@ def purge_workspace(ctx, force=False):
     if ctx.workspace_alias:
         LOG.info("短路径：%s" % ctx.workspace)
 
+    # 兼容曾经出现过的“真实工作区在短路径、工程里是联接点”的布局：
+    # 先摘掉工程里的联接点（只删链接），再删它指向的真实目录
+    if os.path.isdir(ctx.workspace) and _is_reparse_point(ctx.workspace):
+        target = _link_target(ctx.workspace)
+        try:
+            os.rmdir(ctx.workspace)
+            LOG.ok("已删除工程里的工作区联接点：%s" % ctx.workspace_link or ctx.workspace)
+        except Exception as exc:
+            LOG.warn("删除联接点失败：%s" % exc)
+        if target and os.path.isdir(target):
+            _rmtree(target, LOG)
+
     freed = 0
     if os.path.isdir(ctx.workspace):
         freed = _dir_size(ctx.workspace)
@@ -1690,8 +1789,20 @@ def purge_workspace(ctx, force=False):
         except Exception as exc:
             LOG.warn("删除状态记录失败：%s" % exc)
 
+    # 短路径联接点（以及空的 <盘>:\vws）
     if ctx.workspace_alias:
-        _drop_alias(ctx.workspace_alias, LOG)
+        if _is_reparse_point(ctx.workspace_alias):
+            _drop_alias(ctx.workspace_alias, LOG)
+        elif os.path.isdir(ctx.workspace_alias):
+            _rmtree(ctx.workspace_alias, LOG)
+            LOG.ok("已删除短路径目录：%s" % ctx.workspace_alias)
+            parent = os.path.dirname(ctx.workspace_alias)
+            try:
+                if parent and os.path.isdir(parent) and not os.listdir(parent):
+                    os.rmdir(parent)
+                    LOG.info_detail("已删除空的 %s" % parent)
+            except Exception:
+                pass
 
     # 日志目录（每次生成都会重建，属于可丢弃的残留）
     # 注意：先把脚本自己的日志文件句柄关掉，否则 Windows 下删不掉这个目录
@@ -1884,6 +1995,8 @@ def build_parser():
     parser.add_argument("--pull", action="store_true", help="把工作区里改过的源码同步回 src/ps")
     parser.add_argument("--fix-sources", action="store_true",
                         help="把 src/ps 里硬编码绝对路径的 #include 改成文件名引用")
+    parser.add_argument("--fix-bsp", action="store_true",
+                        help="只清理 BSP 的 ninja 构建缓存（编译平台报错时用）")
     parser.add_argument("--purge", action="store_true",
                         help="清理：删除生成的 Vitis 工作区、状态记录和短路径联接点（不动源码）")
     parser.add_argument("--force", action="store_true",
@@ -1947,6 +2060,18 @@ def _run(args, ctx):
 
     inside_vitis = vitis_module_available()
     resolve_workspace(ctx, LOG)
+
+    # 路径过长又没有短路径联接点时，直接沿用长路径去建平台一定会编译失败
+    # （CMake 的编译器自检就过不去），所以必须先停下来并告诉用户怎么修。
+    if ctx.workspace_blocked and not args.purge:
+        LOG.raw("")
+        LOG.error("工作区路径过长，但短路径联接点建立失败：%s" % ctx.workspace_blocked)
+        LOG.info("这会导致编译平台时报错（CMake/编译器路径超过 260 字符）。")
+        LOG.info("请先删掉这个残留目录，然后重新运行本脚本：")
+        LOG.info("    rd /s /q \"%s\"" % ctx.workspace_blocked)
+        LOG.info("（如果里面还有需要的文件，请先备份；删掉后脚本会自动重建联接点）")
+        return 2
+
     mode, reason = decide_mode(ctx, force_clean=args.clean, force_sync=args.sync)
 
     if args.check:
@@ -1955,6 +2080,9 @@ def _run(args, ctx):
 
     if args.fix_sources:
         return fix_sources(ctx)
+
+    if args.fix_bsp:
+        return fix_bsp(ctx)
 
     if args.purge:
         return purge_workspace(ctx, force=args.force)
@@ -2005,7 +2133,11 @@ def _run(args, ctx):
         old_marker = read_marker(ctx)
         old_alias = (old_marker or {}).get("alias") or ""
         if old_alias and os.path.normcase(old_alias) != os.path.normcase(ctx.workspace_alias):
-            _remove_junction(old_alias, LOG)
+            # 旧版本留下的联接点/短目录，清掉
+            if _is_reparse_point(old_alias):
+                _remove_junction(old_alias, LOG)
+            elif os.path.isdir(old_alias):
+                _rmtree(old_alias, LOG)
 
     if mode in ("full", "sync"):
         if inside_vitis:

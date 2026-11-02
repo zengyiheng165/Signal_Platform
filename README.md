@@ -28,6 +28,8 @@ Software_Defined_Signal_Test_and_Validation_Platform/
 │   └── README.md                          脚本的详细用法与排错说明
 ├── board/                     脚本生成的工程（可随时删除后重新生成），初始状态为空
 │   ├── Vitis_WorkSpace/       Vitis 工作区（平台 BSP + 应用工程 + ELF）
+│   │                          Vitis 会通过 D:\vws\<工程名>_<短哈希> 的短路径联接点访问它，
+│   │                          以避免路径过长导致编译失败
 │   ├── prj/                   Vivado 工程（prj.xpr）
 ├── data/                      测试数据与报告
 ├── report/                    设计报告
@@ -37,6 +39,8 @@ Software_Defined_Signal_Test_and_Validation_Platform/
 ```
 
 > 提示：`board/` 里的内容全部由脚本生成，初始状态为空，删掉后重新运行对应脚本即可恢复；
+> 打开 Vitis 工程请用脚本（它会用短路径 `D:\vws\...` 打开），**不要**手工打开
+> `board/Vitis_WorkSpace`，否则编译平台会因路径超过 CMake 上限而报错。
 
 
 
@@ -47,10 +51,9 @@ Software_Defined_Signal_Test_and_Validation_Platform/
 
 复现本工程需要准备：一块 **ZYNQ7020** 开发板、**AD9238** 模块、**AD9767** 模块，以及一块 **800×480 RGB565 TFT LCD** 屏幕（触控使用 IIC 通信）。板卡连线需满足引脚约束文件 `src/pl/constr/pin.xdc` 的定义。
 
-**路径要求**：工程所在路径尽量短（建议直接放在某个盘的根目录），且不要包含中文和空格。电脑上需已安装 **Vitis 26.1** 与 **Vivado 26.1**，然后按以下步骤操作。
+**路径要求**：工程所在路径尽量短（建议直接放在某个盘的根目录），且不要包含中文和空格。电脑上需已安装 **Vitis 26.1** 与 **Vivado 26.1**，然后按以下步骤操作。且项目文件夹名字必须是`Software_Defined_Signal_Test_and_Validation_Platform` 。
 
 ## 复现步骤
-
 1. 依次打开 `Software_Defined_Signal_Test_and_Validation_Platform` 文件夹和 `build`文件夹，双击 `build/create_vitis_workspace.bat`这个 Windows 批处理文件。
 
 2. 等待脚本自动完成：首次运行约需 1-5 分钟（要编译平台 BSP 和应用），它会在 `board` 文件夹内创建 Vitis 工作区（`board/Vitis_WorkSpace`），编译完成后自动打开 Vitis 工程，即可查看代码。之后再次运行时工作区已就绪，只需几秒就会打开工程。

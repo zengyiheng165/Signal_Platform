@@ -134,6 +134,11 @@ Windows 下 Vitis 的 BSP 编译受路径长度限制（CMake/ninja 生成的对
 工程搬家后短哈希会变，脚本会自动使用新的联接点；若工程放到短路径（如 `D:\sds\`），
 脚本会自动改用真实路径，不再建联接点。
 
+> **注意**：Vitis 用“你打开工作区时用的那个路径”去编译，不会把联接点解析回真实路径。
+> 所以请让脚本自动打开 IDE（它开的是 `D:\vws\...` 短路径）；如果手工打开
+> `board\Vitis_WorkSpace`，BSP 的对象文件路径会超过 CMake 的 250 字符上限，
+> 编译平台就会报 `Error in generating platform`。
+
 > 因为 BSP 中间文件很深，用资源管理器手动删除/移动 `board\Vitis_WorkSpace` 可能报“路径太长”。
 > 删除请用 `python build\create_vitis_workspace.py --clean`，移动整个工程时先剪切 `board` 之外的部分，
 > 或先清理再移动。
@@ -252,6 +257,57 @@ Vitis 用一个独占的锁文件 `<工作区>\_ide\.wsdata\.lock` 表示“工�
 `board\Vitis_WorkSpace\_ide\.wsdata\.lock` 即可；或直接点弹窗里的 “Open Anyway”
 （在确认没有进程占用时，点它是安全的）。
 
+**Q：在 IDE 里点“编译平台”，只报 `Error in generating platform 'platform_v5_4'.`**
+
+这句提示底下其实有**两种完全不同的原因**，看日志里的关键字区分：
+
+**原因 A（最常见）：路径太长，CMake 拒绝编译**
+
+日志里会出现：
+
+```
+The object file directory
+  D:/.../board/Vitis_WorkSpace/platform_v5_4/.../gen_bsp/CMakeFiles/CMakeScratch/TryCompile-xxxx/
+  has 252 characters.  The maximum full path to an object file is 250
+-- Check for working C compiler: ... - broken
+[ERROR]: Failed to configure CMake with updated BSP configurations
+```
+
+说明这次编译用的是**工程里的长路径**（`board\Vitis_WorkSpace`），BSP 的对象文件路径
+到了 252 字符，超过 CMake 的 250 上限。**解决办法：用脚本打开 IDE**（脚本开的是
+`D:\vws\<工程名>_<短哈希>\Vitis_WorkSpace` 这个短路径），不要手工打开
+`board\Vitis_WorkSpace`。已经这样搞坏过的话，执行：
+
+```bat
+build\create_vitis_workspace.bat --clean
+```
+
+**原因 B：BSP 的 ninja 缓存坏了，又被 GBK 解码带偏**
+
+日志里会出现 `UnicodeDecodeError: 'utf-8' codec can't decode byte 0xd5`：
+
+1. BSP 构建目录里 `CMakeFiles/rules.ninja` 丢了（构建被中断、或同一个工作区
+   被两种路径编译过），`build.ninja` 却还在；
+2. 于是 `cmake --build .` 一启动，ninja 就先报
+   `系统找不到指定的文件。`（中文，GBK 编码）；
+3. Vitis 的 BSP 构建脚本用**严格 UTF-8** 解码这段输出，抛
+   `UnicodeDecodeError: 'utf-8' codec can't decode byte 0xd5`，
+   界面上就只剩那句 `Error in generating platform`。
+
+处理办法（任选其一，从轻到重）：
+
+```bat
+:: 1) 只清 BSP 构建缓存，然后重新编译
+python build\create_vitis_workspace.py --fix-bsp
+build\create_vitis_workspace.bat --sync
+
+:: 2) 直接重建整个工作区（最稳）
+build\create_vitis_workspace.bat --clean
+```
+
+脚本在生成时已经会自动检测“平台编译失败”，清理 BSP 缓存后重试一次，
+所以正常情况下重新跑一遍 `create_vitis_workspace.bat` 就能恢复。
+
 **Q：换电脑后提示“没有找到可用的 Vitis 安装”**
 
 脚本找 Vitis 的顺序是：`--vitis` 参数 → 环境变量 `VITIS_ROOT` / `XILINX_VITIS` → PATH →
@@ -308,12 +364,15 @@ src\ps\
 ## 生成的工作区结构
 
 ```
-board\Vitis_WorkSpace\
+board\Vitis_WorkSpace\        （真实目录；Vitis 通过 D:\vws\<工程名>_<短哈希> 联接点访问它）
 ├── platform_v5_4\            平台组件（BSP、FSBL、导出的 xpfm）
-├── app\                 应用组件（src 为源码副本，build 下为 ELF）
+├── app\                      应用组件（src 为源码副本，build 下为 app.elf）
 │   └── _ide\                 调试配置、比特流、ps7_init.tcl
 └── _ide\                     Vitis 工作区元数据
 ```
+
+> BSP 的 `gen_bsp` 目录很深，路径一长 CMake 就直接拒绝编译，所以生成/编译/打开 IDE
+> 都走短路径联接点。删除请用 `clean_vitis_workspace.bat`，它会把工作区和联接点一起清掉。
 
 > 说明：源码以 `src\ps` 为准，每次完整生成/同步都会复制到工作区组件里编译。
 > 如果在 Vitis IDE 里直接改了代码，记得用 `--pull` 同步回 `src\ps`，否则下次
