@@ -1,0 +1,69 @@
+# ============================================================
+#  Software_Defined_Signal_Test_and_Validation_Platform
+#  Git 忽略规则：只忽略“可再生成的编译/工程产物”，源码与交付物全部保留
+# ============================================================
+
+# ---------- 操作系统 / 编辑器 ----------
+.DS_Store
+Thumbs.db
+desktop.ini
+*.swp
+*~
+.vscode/
+.idea/
+__pycache__/
+*.pyc
+
+# ---------- build/ 脚本生成的工程（可随时重建） ----------
+/board/
+
+# ---------- Vivado 临时文件与日志 ----------
+.Xil/
+NA/
+*.jou
+*.log
+*.str
+*.wdb
+*.wcfg
+*.protoinst
+vivado_pid*
+vivado*.backup.*
+hs_err_pid*
+webtalk*
+usage_statistics_webtalk.*
+
+# ---------- Vitis / Vitis HLS 构建产物 ----------
+# autopilot 数据库（本项目内最大的一块，约 47 MB）
+.autopilot/
+.cache/
+# C 仿真、协同仿真、综合输出（含 xsimk.exe、自动生成的 RTL 副本，约 30 MB）
+**/hls/sim/
+**/hls/csim/
+**/hls/syn/
+**/hls/.debug/
+xsim.dir/
+*.hlscompile_summary
+*.hlsrun_*_summary
+hls_data.json
+
+# 编译中间文件
+*.o
+*.d
+*.obj
+*.exe
+*.a
+*.so
+*.dll
+*.bc
+*.ll
+*.adb
+*.hcp
+*.directive.json
+
+# ------------------------------------------------------------
+# 说明（有意保留的内容）：
+#   src/pl/ip_repo/Levy_2/.../hls/impl/   打包后的 HLS IP（component.xml + HDL），需保留
+#   src/pl/ip_repo/my_dds_2_0/            DDS 自定义 IP，需保留
+#   report/  data/                        设计报告与测试报告，需保留
+#   src/ps/system_wrapper.xsa             硬件描述文件，需保留
+# ------------------------------------------------------------

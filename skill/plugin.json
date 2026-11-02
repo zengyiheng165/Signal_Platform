@@ -1,0 +1,9 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "zynq-ps-pl-dev-skills",
+  "version": "1.4.0",
+  "description": "Zynq-7000 开发技能集：PS 端（ARM 裸机 C）DMA 采集与多中断排查，PL 端（VDMA/VTC/Video Out）显示通路配置审计。技能以 ps-/pl- 前缀区分端侧。",
+  "author": { "name": "Project Maintainers" },
+  "license": "MIT",
+  "keywords": ["zynq","ps","pl","arm","bare-metal","axi-dma","interrupt","gic","vdma","v_tc","display","fpga"]
+}

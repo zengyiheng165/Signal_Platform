@@ -1,0 +1,15 @@
+# 本工程只在 Windows（Vivado / Vitis）上开发，故不做换行符转换，
+# 让 Git 按原始字节保存，避免出现“整文件都是 diff”的噪音。
+* -text
+
+# 明确标记二进制文件（便于 GitHub 正确识别、必要时配合 LFS）
+*.pdf   binary
+*.xsa   binary
+*.dcp   binary
+*.zip   binary
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.bmp   binary
+*.ico   binary
+*.gif   binary

@@ -1,0 +1,35 @@
+{
+  "schema": 1,
+  "description": "Zynq-7000 软件定义信号测试与验证平台 · PS 端应用（Vitis Unified IDE）",
+  "tips": [
+    "vitis_version：目标 Vitis 版本。脚本自动查找时可被 --vitis 覆盖。",
+    "workspace：工作区相对工程根目录的位置，移动工程后会按此路径重建。",
+    "xsa：相对 src/ps 的硬件描述文件；XSA 更新后脚本会自动重建平台。",
+    "app.sources：留空 [] 表示自动扫描 src/ps 下所有 .c/.h；填入文件名则只使用列出的文件。",
+    "app.stack_size / heap_size：写入 lscript.ld 的 _STACK_SIZE / _HEAP_SIZE。"
+  ],
+  "vitis_version": "2026.1",
+  "workspace": "board/Vitis_WorkSpace",
+  "xsa": "system_wrapper.xsa",
+  "platform": {
+    "name": "platform_v5_4",
+    "os": "standalone",
+    "cpu": "ps7_cortexa9_0",
+    "domain": "standalone_ps7_cortexa9_0",
+    "compiler": "gcc",
+    "no_boot_bsp": false
+  },
+  "app": {
+    "name": "app",
+    "template": "hello_world",
+    "domain": "standalone_ps7_cortexa9_0",
+    "link_libraries": [
+      "m"
+    ],
+    "optimization": "-O2",
+    "stack_size": "0x200000",
+    "heap_size": "0x200000",
+    "sources": []
+  },
+  "debug_launch": "ide/launch.json"
+}

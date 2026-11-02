@@ -1,0 +1,3 @@
+relativeroot=D:/Vivado26.1/Embeddedrace_v_4_2/WS_HLS/Levy_2
+original_argv=--mode hls --package --config D:\Vivado26.1\Embeddedrace_v_4_2\WS_HLS\Levy_2\hls_config.cfg --work_dir levy_moments_hls 
+

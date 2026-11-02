@@ -1,0 +1,27 @@
+[
+  {
+    "directory": "D:\\Vivado26.1\\Embeddedrace_v_4_2\\WS_HLS\\Levy_2",
+    "arguments": [
+      "D:\\Vivado26.1\\2026.1\\Vitis\\win64\\tools\\clang-16\\bin\\clang++.exe",
+      "--sysroot=D:\\Vivado26.1\\2026.1\\Vitis\\tps\\mingw\\10.0.0\\win64.o\\nt",
+      "-fhls",
+      "-hls-syn-headers-dir=D:\\Vivado26.1\\2026.1\\Vitis\\common\\technology\\autopilot",
+      "-fhlstoplevel=levy_moments_hls",
+      "-c",
+      "D:\\Vivado26.1\\Embeddedrace_v_4_2\\WS_HLS\\levy_src\\levy_moments_hls.cpp"
+    ],
+    "file": "D:\\Vivado26.1\\Embeddedrace_v_4_2\\WS_HLS\\levy_src\\levy_moments_hls.cpp"
+  },
+  {
+    "directory": "D:\\Vivado26.1\\Embeddedrace_v_4_2\\WS_HLS\\Levy_2",
+    "arguments": [
+      "D:\\Vivado26.1\\2026.1\\Vitis\\win64\\tools\\clang-16\\bin\\clang++.exe",
+      "--sysroot=D:\\Vivado26.1\\2026.1\\Vitis\\tps\\mingw\\10.0.0\\win64.o\\nt",
+      "-fhls-tb",
+      "-hls-sim-headers-dir=D:\\Vivado26.1\\2026.1\\Vitis\\include",
+      "-c",
+      "D:\\Vivado26.1\\Embeddedrace_v_4_2\\WS_HLS\\levy_src\\tb_levy_moments.cpp"
+    ],
+    "file": "D:\\Vivado26.1\\Embeddedrace_v_4_2\\WS_HLS\\levy_src\\tb_levy_moments.cpp"
+  }
+]

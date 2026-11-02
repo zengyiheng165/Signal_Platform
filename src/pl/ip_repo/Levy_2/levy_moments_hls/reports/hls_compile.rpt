@@ -1,0 +1,309 @@
+
+
+================================================================
+== Synthesis Summary Report of 'levy_moments_hls'
+================================================================
++ General Information: 
+    * Date:           Sun Oct  4 15:52:21 2026
+    * Version:        2026.1 (Build 6493734 on Jun 16 2026)
+    * Project:        levy_moments_hls
+    * Solution:       hls
+    * Product family: zynq
+    * Target device:  xc7z020-clg400-1
+    
+
+* Performance & Resource Estimates: 
++---------------------------------------------+------+---------------+----------+---------+------+----------+---------+-----------+------+---------+--------+-----------+------------+-----+
+|                   Modules                   | Issue|               | Iteration|         | Trip |          |       Latency       |      |         |        |           |            |     |
+|                   & Loops                   | Type | Violation Type|  Latency | Interval| Count| Pipelined| (cycles)|    (ns)   | Slack|  BRAM   |   DSP  |     FF    |     LUT    | URAM|
++---------------------------------------------+------+---------------+----------+---------+------+----------+---------+-----------+------+---------+--------+-----------+------------+-----+
+|+ levy_moments_hls                           |     -|              -|         -|     8578|     -|        no|     8577|  8.577e+04|  0.00|  2 (~0%)|  8 (3%)|  5777 (5%)|  6635 (12%)|    -|
+| + levy_moments_hls_Pipeline_frequency_loop  |     -|              -|         -|     8216|     -|       yes|     8216|  8.216e+04|  0.00|        -|  6 (2%)|  1847 (1%)|   2835 (5%)|    -|
+|  o frequency_loop                           |     -|              -|        27|        4|  2048|       yes|     8214|  8.214e+04|  7.30|        -|       -|          -|           -|    -|
+| + levy_moments_hls_Pipeline_reduce_moments  |     -|              -|         -|      346|     -|       yes|      346|  3.460e+03|  0.04|        -|       -|  382 (~0%)|    811 (1%)|    -|
+|  o reduce_moments                           |     -|              -|        44|       43|     7|       yes|      344|  3.440e+03|  7.30|        -|       -|          -|           -|    -|
++---------------------------------------------+------+---------------+----------+---------+------+----------+---------+-----------+------+---------+--------+-----------+------------+-----+
+    Name Prefix: '+' for module, 'o' for loop, '*' for dataflow
+
+
+================================================================
+== HW Interfaces
+================================================================
+* M_AXI
++------------+------------+------------+---------------+---------+--------+----------+-----------+--------------+--------------+-------------+-------------+-------------------+
+| Interface  | Read/Write | Data Width | Address Width | Latency | Offset | Register | Max Widen | Max Read     | Max Write    | Num Read    | Num Write   | Resource Estimate |
+|            |            | (SW->HW)   |               |         |        |          | Bitwidth  | Burst Length | Burst Length | Outstanding | Outstanding |                   |
++------------+------------+------------+---------------+---------+--------+----------+-----------+--------------+--------------+-------------+-------------+-------------------+
+| m_axi_gmem | READ_ONLY  | 32 -> 32   | 64            | 0       | slave  | 0        | 0         | 64           | 16           | 2           | 16          | BRAM=2            |
++------------+------------+------------+---------------+---------+--------+----------+-----------+--------------+--------------+-------------+-------------+-------------------+
+
+* S_AXILITE Interfaces
++---------------+------------+---------------+--------+----------+
+| Interface     | Data Width | Address Width | Offset | Register |
++---------------+------------+---------------+--------+----------+
+| s_axi_control | 32         | 8             | 24     | 0        |
++---------------+------------+---------------+--------+----------+
+
+* S_AXILITE Registers
++---------------+-------------+--------+-------+--------+----------------------------------+----------------------------------------------------------------------+
+| Interface     | Register    | Offset | Width | Access | Description                      | Bit Fields                                                           |
++---------------+-------------+--------+-------+--------+----------------------------------+----------------------------------------------------------------------+
+| s_axi_control | CTRL        | 0x00   | 32    | RW     | Control signals                  | 0=AP_START 1=AP_DONE 2=AP_IDLE 3=AP_READY 7=AUTO_RESTART 9=INTERRUPT |
+| s_axi_control | GIER        | 0x04   | 32    | RW     | Global Interrupt Enable Register | 0=Enable                                                             |
+| s_axi_control | IP_IER      | 0x08   | 32    | RW     | IP Interrupt Enable Register     | 0=CHAN0_INT_EN 1=CHAN1_INT_EN                                        |
+| s_axi_control | IP_ISR      | 0x0c   | 32    | RW     | IP Interrupt Status Register     | 0=CHAN0_INT_ST 1=CHAN1_INT_ST                                        |
+| s_axi_control | ap_return   | 0x10   | 32    | R      | Data signal of ap_return         |                                                                      |
+| s_axi_control | samples_1   | 0x18   | 32    | W      | Data signal of samples           |                                                                      |
+| s_axi_control | samples_2   | 0x1c   | 32    | W      | Data signal of samples           |                                                                      |
+| s_axi_control | point_count | 0x24   | 32    | W      | Data signal of point_count       |                                                                      |
+| s_axi_control | m0          | 0x2c   | 32    | R      | Data signal of m0                |                                                                      |
+| s_axi_control | m0_ctrl     | 0x30   | 32    | R      | Control signal of m0             | 0=m0_ap_vld                                                          |
+| s_axi_control | m1          | 0x3c   | 32    | R      | Data signal of m1                |                                                                      |
+| s_axi_control | m1_ctrl     | 0x40   | 32    | R      | Control signal of m1             | 0=m1_ap_vld                                                          |
+| s_axi_control | m2          | 0x4c   | 32    | R      | Data signal of m2                |                                                                      |
+| s_axi_control | m2_ctrl     | 0x50   | 32    | R      | Control signal of m2             | 0=m2_ap_vld                                                          |
+| s_axi_control | m3          | 0x5c   | 32    | R      | Data signal of m3                |                                                                      |
+| s_axi_control | m3_ctrl     | 0x60   | 32    | R      | Control signal of m3             | 0=m3_ap_vld                                                          |
+| s_axi_control | m4          | 0x6c   | 32    | R      | Data signal of m4                |                                                                      |
+| s_axi_control | m4_ctrl     | 0x70   | 32    | R      | Control signal of m4             | 0=m4_ap_vld                                                          |
+| s_axi_control | m5          | 0x7c   | 32    | R      | Data signal of m5                |                                                                      |
+| s_axi_control | m5_ctrl     | 0x80   | 32    | R      | Control signal of m5             | 0=m5_ap_vld                                                          |
+| s_axi_control | m6          | 0x8c   | 32    | R      | Data signal of m6                |                                                                      |
+| s_axi_control | m6_ctrl     | 0x90   | 32    | R      | Control signal of m6             | 0=m6_ap_vld                                                          |
++---------------+-------------+--------+-------+--------+----------------------------------+----------------------------------------------------------------------+
+
+* TOP LEVEL CONTROL
++-----------+------------+-----------+
+| Interface | Type       | Ports     |
++-----------+------------+-----------+
+| ap_clk    | clock      | ap_clk    |
+| ap_rst_n  | reset      | ap_rst_n  |
+| interrupt | interrupt  | interrupt |
+| ap_ctrl   | ap_ctrl_hs |           |
++-----------+------------+-----------+
+
+
+================================================================
+== SW I/O Information
+================================================================
+* Top Function Arguments
++-------------+-----------+---------------+
+| Argument    | Direction | Datatype      |
++-------------+-----------+---------------+
+| samples     | in        | float const * |
+| point_count | in        | unsigned int  |
+| m0          | out       | float&        |
+| m1          | out       | float&        |
+| m2          | out       | float&        |
+| m3          | out       | float&        |
+| m4          | out       | float&        |
+| m5          | out       | float&        |
+| m6          | out       | float&        |
+| return      | out       | int           |
++-------------+-----------+---------------+
+
+* SW-to-HW Mapping
++-------------+---------------+-----------+----------+---------------------------------------+
+| Argument    | HW Interface  | HW Type   | HW Usage | HW Info                               |
++-------------+---------------+-----------+----------+---------------------------------------+
+| samples     | m_axi_gmem    | interface |          | channel=0                             |
+| samples     | s_axi_control | register  | offset   | name=samples_1 offset=0x18 range=32   |
+| samples     | s_axi_control | register  | offset   | name=samples_2 offset=0x1c range=32   |
+| point_count | s_axi_control | register  |          | name=point_count offset=0x24 range=32 |
+| m0          | s_axi_control | register  |          | name=m0 offset=0x2c range=32          |
+| m0          | s_axi_control | register  |          | name=m0_ctrl offset=0x30 range=32     |
+| m1          | s_axi_control | register  |          | name=m1 offset=0x3c range=32          |
+| m1          | s_axi_control | register  |          | name=m1_ctrl offset=0x40 range=32     |
+| m2          | s_axi_control | register  |          | name=m2 offset=0x4c range=32          |
+| m2          | s_axi_control | register  |          | name=m2_ctrl offset=0x50 range=32     |
+| m3          | s_axi_control | register  |          | name=m3 offset=0x5c range=32          |
+| m3          | s_axi_control | register  |          | name=m3_ctrl offset=0x60 range=32     |
+| m4          | s_axi_control | register  |          | name=m4 offset=0x6c range=32          |
+| m4          | s_axi_control | register  |          | name=m4_ctrl offset=0x70 range=32     |
+| m5          | s_axi_control | register  |          | name=m5 offset=0x7c range=32          |
+| m5          | s_axi_control | register  |          | name=m5_ctrl offset=0x80 range=32     |
+| m6          | s_axi_control | register  |          | name=m6 offset=0x8c range=32          |
+| m6          | s_axi_control | register  |          | name=m6_ctrl offset=0x90 range=32     |
+| return      | s_axi_control | register  |          | name=ap_return offset=0x10 range=32   |
++-------------+---------------+-----------+----------+---------------------------------------+
+
+
+================================================================
+== M_AXI Burst Information
+================================================================
+ Note: All burst requests might be further partitioned into multiple requests during RTL generation based on max_read_burst_length or max_write_burst_length settings.
+
+* Inferred Burst Summary
++--------------+-----------+----------+-------+----------------+---------------------------------------+
+| HW Interface | Direction | Length   | Width | Loop           | Loop Location                         |
++--------------+-----------+----------+-------+----------------+---------------------------------------+
+| m_axi_gmem   | read      | variable | 32    | frequency_loop | ../levy_src/levy_moments_hls.cpp:47:5 |
++--------------+-----------+----------+-------+----------------+---------------------------------------+
+
+* All M_AXI Variable Accesses
++--------------+----------+----------------------------------------+-----------+--------------+----------+----------------+---------------------------------------+------------+---------------------------------------------------------------------------------------------------------+
+| HW Interface | Variable | Access Location                        | Direction | Burst Status | Length   | Loop           | Loop Location                         | Resolution | Problem                                                                                                 |
++--------------+----------+----------------------------------------+-----------+--------------+----------+----------------+---------------------------------------+------------+---------------------------------------------------------------------------------------------------------+
+| m_axi_gmem   | samples  | ../levy_src/levy_moments_hls.cpp:52:25 | read      | Widen Fail   |          | frequency_loop | ../levy_src/levy_moments_hls.cpp:47:5 | 214-353    | Could not widen since type float size is greater than or equal to the max_widen_bitwidth threshold of 0 |
+| m_axi_gmem   | samples  | ../levy_src/levy_moments_hls.cpp:52:25 | read      | Inferred     | variable | frequency_loop | ../levy_src/levy_moments_hls.cpp:47:5 |            |                                                                                                         |
+| m_axi_gmem   | samples  | ../levy_src/levy_moments_hls.cpp:53:25 | read      | Widen Fail   |          | frequency_loop | ../levy_src/levy_moments_hls.cpp:47:5 | 214-353    | Could not widen since type float size is greater than or equal to the max_widen_bitwidth threshold of 0 |
+| m_axi_gmem   | samples  | ../levy_src/levy_moments_hls.cpp:53:25 | read      | Inferred     | variable | frequency_loop | ../levy_src/levy_moments_hls.cpp:47:5 |            |                                                                                                         |
+| m_axi_gmem   | samples  | ../levy_src/levy_moments_hls.cpp:54:25 | read      | Widen Fail   |          | frequency_loop | ../levy_src/levy_moments_hls.cpp:47:5 | 214-353    | Could not widen since type float size is greater than or equal to the max_widen_bitwidth threshold of 0 |
+| m_axi_gmem   | samples  | ../levy_src/levy_moments_hls.cpp:54:25 | read      | Inferred     | variable | frequency_loop | ../levy_src/levy_moments_hls.cpp:47:5 |            |                                                                                                         |
++--------------+----------+----------------------------------------+-----------+--------------+----------+----------------+---------------------------------------+------------+---------------------------------------------------------------------------------------------------------+
+
+    * Resolution URL: docs.amd.com/access/sources/dita/topic?Doc_Version=2026.1%20English&url=ug1448-hls-guidance&resourceid=XXX-YYY.html (replace XXX-YYY with column value)
+
+================================================================
+== Bind Op Report
+================================================================
++---------------------------------------------+-----+--------+---------------+-----------+--------------------------+---------+
+| Name                                        | DSP | Pragma | Variable      | Op        | Impl                     | Latency |
++---------------------------------------------+-----+--------+---------------+-----------+--------------------------+---------+
+| + levy_moments_hls                          | 8   |        |               |           |                          |         |
+|   fcmp_32ns_32ns_1_2_no_dsp_1_U157          |     |        | m1_write_ln33 | adapter   | s_axilite                | 0       |
+|   fcmp_32ns_32ns_1_2_no_dsp_1_U158          |     |        | add_ln34      | add       | fabric                   | 0       |
+|   icmp_ln34_fu_612_p2                       |     |        | icmp_ln34     | seteq     | auto                     | 0       |
+|   icmp_ln47_fu_898_p2                       |     |        | icmp_ln47     | seteq     | auto                     | 0       |
+|   sub_ln47_fu_913_p2                        |     |        | sub_ln47      | sub       | fabric                   | 0       |
+|  + levy_moments_hls_Pipeline_frequency_loop | 6   |        |               |           |                          |         |
+|    icmp_ln47_fu_1121_p2                     |     |        | icmp_ln47     | seteq     | auto                     | 0       |
+|    add_ln47_fu_1127_p2                      |     |        | add_ln47      | add       | fabric                   | 0       |
+|    xor_ln11_fu_1178_p2                      |     |        | xor_ln11      | xor       | auto                     | 0       |
+|    icmp_ln11_fu_1168_p2                     |     |        | icmp_ln11     | setne     | auto                     | 0       |
+|    icmp_ln11_1_fu_1173_p2                   |     |        | icmp_ln11_1   | seteq     | auto                     | 0       |
+|    or_ln11_fu_1184_p2                       |     |        | or_ln11       | or        | auto                     | 0       |
+|    and_ln11_1_fu_1188_p2                    |     |        | and_ln11_1    | and       | auto                     | 0       |
+|    and_ln11_fu_1194_p2                      |     |        | and_ln11      | and       | auto                     | 0       |
+|    xor_ln11_1_fu_1207_p2                    |     |        | xor_ln11_1    | xor       | auto                     | 0       |
+|    or_ln55_fu_1213_p2                       |     |        | or_ln55       | or        | auto                     | 0       |
+|    xor_ln11_2_fu_1251_p2                    |     |        | xor_ln11_2    | xor       | auto                     | 0       |
+|    icmp_ln11_2_fu_1233_p2                   |     |        | icmp_ln11_2   | setne     | auto                     | 0       |
+|    icmp_ln11_3_fu_1239_p2                   |     |        | icmp_ln11_3   | seteq     | auto                     | 0       |
+|    or_ln11_1_fu_1257_p2                     |     |        | or_ln11_1     | or        | auto                     | 0       |
+|    and_ln11_3_fu_1261_p2                    |     |        | and_ln11_3    | and       | auto                     | 0       |
+|    and_ln11_5_fu_1267_p2                    |     |        | and_ln11_5    | and       | auto                     | 0       |
+|    and_ln11_2_fu_1273_p2                    |     |        | and_ln11_2    | and       | auto                     | 0       |
+|    xor_ln11_3_fu_1303_p2                    |     |        | xor_ln11_3    | xor       | auto                     | 0       |
+|    icmp_ln11_4_fu_1291_p2                   |     |        | icmp_ln11_4   | setne     | auto                     | 0       |
+|    icmp_ln11_5_fu_1297_p2                   |     |        | icmp_ln11_5   | seteq     | auto                     | 0       |
+|    or_ln11_2_fu_1309_p2                     |     |        | or_ln11_2     | or        | auto                     | 0       |
+|    and_ln11_6_fu_1313_p2                    |     |        | and_ln11_6    | and       | auto                     | 0       |
+|    and_ln11_7_fu_1319_p2                    |     |        | and_ln11_7    | and       | auto                     | 0       |
+|    and_ln11_4_fu_1325_p2                    |     |        | and_ln11_4    | and       | auto                     | 0       |
+|    fmul_32ns_32ns_32_4_full_dsp_1_U3        | 2   | yes    | t             | fmul      | fulldsp                  | 3       |
+|    fmul_32ns_32ns_32_4_full_dsp_1_U4        | 2   | yes    | t2            | fmul      | fulldsp                  | 3       |
+|    fmul_32ns_32ns_32_4_full_dsp_1_U3        | 2   | yes    | tv            | fmul      | fulldsp                  | 3       |
+|    fmul_32ns_32ns_32_4_full_dsp_1_U3        | 2   | yes    | u2            | fmul      | fulldsp                  | 3       |
+|    fmul_32ns_32ns_32_4_full_dsp_1_U4        | 2   | yes    | v2            | fmul      | fulldsp                  | 3       |
+|    fmul_32ns_32ns_32_4_full_dsp_1_U4        | 2   | yes    | t2u           | fmul      | fulldsp                  | 3       |
+|    fmul_32ns_32ns_32_4_full_dsp_1_U3        | 2   | yes    | t2power       | fmul      | fulldsp                  | 3       |
+|    fmul_32ns_32ns_32_4_full_dsp_1_U4        | 2   | yes    | t3v           | fmul      | fulldsp                  | 3       |
+|    sparsemux_17_3_32_1_1_U9                 |     |        | tmp           | sparsemux | compactencoding_dontcare | 0       |
+|    sparsemux_17_3_32_1_1_U8                 |     |        | tmp_1         | sparsemux | compactencoding_dontcare | 0       |
+|    sparsemux_17_3_32_1_1_U11                |     |        | tmp_2         | sparsemux | compactencoding_dontcare | 0       |
+|    fadd_32ns_32ns_32_5_full_dsp_1_U2        | 2   | yes    | partial_58    | fadd      | fulldsp                  | 4       |
+|    sparsemux_17_3_32_1_1_U12                |     |        | tmp_3         | sparsemux | compactencoding_dontcare | 0       |
+|    sparsemux_17_3_32_1_1_U10                |     |        | tmp_4         | sparsemux | compactencoding_dontcare | 0       |
+|    fadd_32ns_32ns_32_5_full_dsp_1_U2        | 2   | yes    | partial_60    | fadd      | fulldsp                  | 4       |
+|    sparsemux_17_3_32_1_1_U14                |     |        | tmp_5         | sparsemux | compactencoding_dontcare | 0       |
+|    fadd_32ns_32ns_32_5_full_dsp_1_U2        | 2   | yes    | partial_61    | fadd      | fulldsp                  | 4       |
+|    sparsemux_17_3_32_1_1_U13                |     |        | tmp_6         | sparsemux | compactencoding_dontcare | 0       |
+|    fadd_32ns_32ns_32_5_full_dsp_1_U2        | 2   | yes    | partial_62    | fadd      | fulldsp                  | 4       |
+|  + levy_moments_hls_Pipeline_reduce_moments | 0   |        |               |           |                          |         |
+|    icmp_ln104_fu_707_p2                     |     |        | icmp_ln104    | seteq     | auto                     | 0       |
+|    add_ln104_fu_713_p2                      |     |        | add_ln104     | add       | fabric                   | 0       |
+|    sparsemux_15_3_32_1_1_U82                |     |        | tmp_7         | sparsemux | compactencoding_dontcare | 0       |
+|    sparsemux_15_3_32_1_1_U83                |     |        | tmp_8         | sparsemux | compactencoding_dontcare | 0       |
+|    sparsemux_15_3_32_1_1_U84                |     |        | tmp_9         | sparsemux | compactencoding_dontcare | 0       |
+|    sparsemux_15_3_32_1_1_U85                |     |        | tmp_s         | sparsemux | compactencoding_dontcare | 0       |
+|    sparsemux_15_3_32_1_1_U86                |     |        | tmp_1         | sparsemux | compactencoding_dontcare | 0       |
+|    sparsemux_15_3_32_1_1_U87                |     |        | tmp_2         | sparsemux | compactencoding_dontcare | 0       |
+|    sparsemux_15_3_32_1_1_U88                |     |        | tmp_3         | sparsemux | compactencoding_dontcare | 0       |
+|    sparsemux_15_3_32_1_1_U89                |     |        | tmp_4         | sparsemux | compactencoding_dontcare | 0       |
+|    sparsemux_15_3_32_1_1_U90                |     |        | tmp_5         | sparsemux | compactencoding_dontcare | 0       |
+|    xor_ln11_fu_1089_p2                      |     |        | xor_ln11      | xor       | auto                     | 0       |
+|    icmp_ln11_fu_1077_p2                     |     |        | icmp_ln11     | setne     | auto                     | 0       |
+|    icmp_ln11_1_fu_1083_p2                   |     |        | icmp_ln11_1   | seteq     | auto                     | 0       |
+|    or_ln11_fu_1095_p2                       |     |        | or_ln11       | or        | auto                     | 0       |
+|    and_ln11_fu_1099_p2                      |     |        | and_ln11      | and       | auto                     | 0       |
+|    and_ln11_1_fu_1105_p2                    |     |        | and_ln11_1    | and       | auto                     | 0       |
+|    and_ln11_2_fu_1111_p2                    |     |        | and_ln11_2    | and       | auto                     | 0       |
++---------------------------------------------+-----+--------+---------------+-----------+--------------------------+---------+
+
+
+================================================================
+== Storage Report
+================================================================
++--------------------+-----------+-----------+------+------+--------+--------+----------+------+---------+------------------+
+| Name               | Usage     | Type      | BRAM | URAM | CE_REG | Pragma | Variable | Impl | Latency | Bitwidth, Depth, |
+|                    |           |           |      |      |        |        |          |      |         | Banks            |
++--------------------+-----------+-----------+------+------+--------+--------+----------+------+---------+------------------+
+| + levy_moments_hls |           |           | 2    | 0    |        |        |          |      |         |                  |
+|   control_s_axi_U  | interface | s_axilite |      |      |        |        |          |      |         |                  |
+|   gmem_m_axi_U     | interface | m_axi     | 2    |      |        |        |          |      |         |                  |
++--------------------+-----------+-----------+------+------+--------+--------+----------+------+---------+------------------+
+
+
+================================================================
+== Pragma Report
+================================================================
+* Ignored Pragmas
++-----------------+-------------------------------+-----------------------------------------------------------+-----------------+
+| Type            | Options                       | Location                                                  | Messages        |
++-----------------+-------------------------------+-----------------------------------------------------------+-----------------+
+| ARRAY_PARTITION | variable=terms complete dim=1 | in levy_moments_hls (../levy_src/levy_moments_hls.cpp:87) | Not implemented |
+| UNROLL          |                               | in levy_moments_hls (../levy_src/levy_moments_hls.cpp:92) | Not implemented |
++-----------------+-------------------------------+-----------------------------------------------------------+-----------------+
+
+* Inferred Pragmas
++----------+---------+-------------------------------------------------------------------------------------------------------------------------+-------------------------------+
+| Type     | Options | Location                                                                                                                | Inferred From                 |
++----------+---------+-------------------------------------------------------------------------------------------------------------------------+-------------------------------+
+| PIPELINE |         | loop reduce_moments (../levy_src/levy_moments_hls.cpp:104:5) in levy_moments_hls (../levy_src/levy_moments_hls.cpp:104) | syn.compile.pipeline_loops=64 |
++----------+---------+-------------------------------------------------------------------------------------------------------------------------+-------------------------------+
+
+* Implemented Pragmas
++-----------------+--------------------------------------+-----------------------------------------------------------------------------------+
+| Type            | Options                              | Location                                                                          |
++-----------------+--------------------------------------+-----------------------------------------------------------------------------------+
+| INLINE          |                                      | in _zn12_global__n_112finite_floatef (../levy_src/levy_moments_hls.cpp:10)        |
+| ARRAY_PARTITION | dim=0 type=complete variable=partial | in levy_moments_hls (../levy_src/levy_moments_hls.cpp:43)                         |
+| LOOP_TRIPCOUNT  | max=2048 min=1 avg=1024              | in levy_moments_hls_pipeline_frequency_loop (../levy_src/levy_moments_hls.cpp:51) |
+| ARRAY_PARTITION | dim=1 type=complete variable=sums    | in levy_moments_hls (../levy_src/levy_moments_hls.cpp:102)                        |
++-----------------+--------------------------------------+-----------------------------------------------------------------------------------+
+
+* Valid Pragma Syntax
++-----------------+--------------------------------------------------------------------------------------------------------+------------------------------------------------------------+
+| Type            | Options                                                                                                | Location                                                   |
++-----------------+--------------------------------------------------------------------------------------------------------+------------------------------------------------------------+
+| INLINE          |                                                                                                        | in finite_float (../levy_src/levy_moments_hls.cpp:10)      |
+| INTERFACE       | m_axi port=samples offset=slave bundle=gmem depth=6144 max_read_burst_length=64 num_read_outstanding=2 | in levy_moments_hls (../levy_src/levy_moments_hls.cpp:20)  |
+| INTERFACE       | s_axilite port=samples bundle=control                                                                  | in levy_moments_hls (../levy_src/levy_moments_hls.cpp:21)  |
+| INTERFACE       | s_axilite port=point_count bundle=control                                                              | in levy_moments_hls (../levy_src/levy_moments_hls.cpp:22)  |
+| INTERFACE       | s_axilite port=m0 bundle=control                                                                       | in levy_moments_hls (../levy_src/levy_moments_hls.cpp:23)  |
+| INTERFACE       | s_axilite port=m1 bundle=control                                                                       | in levy_moments_hls (../levy_src/levy_moments_hls.cpp:24)  |
+| INTERFACE       | s_axilite port=m2 bundle=control                                                                       | in levy_moments_hls (../levy_src/levy_moments_hls.cpp:25)  |
+| INTERFACE       | s_axilite port=m3 bundle=control                                                                       | in levy_moments_hls (../levy_src/levy_moments_hls.cpp:26)  |
+| INTERFACE       | s_axilite port=m4 bundle=control                                                                       | in levy_moments_hls (../levy_src/levy_moments_hls.cpp:27)  |
+| INTERFACE       | s_axilite port=m5 bundle=control                                                                       | in levy_moments_hls (../levy_src/levy_moments_hls.cpp:28)  |
+| INTERFACE       | s_axilite port=m6 bundle=control                                                                       | in levy_moments_hls (../levy_src/levy_moments_hls.cpp:29)  |
+| INTERFACE       | s_axilite port=return bundle=control                                                                   | in levy_moments_hls (../levy_src/levy_moments_hls.cpp:30)  |
+| ARRAY_PARTITION | variable=partial complete dim=0                                                                        | in levy_moments_hls (../levy_src/levy_moments_hls.cpp:43)  |
+| PIPELINE        | ii=4                                                                                                   | in levy_moments_hls (../levy_src/levy_moments_hls.cpp:50)  |
+| LOOP_TRIPCOUNT  | min=1 max=2048                                                                                         | in levy_moments_hls (../levy_src/levy_moments_hls.cpp:51)  |
+| BIND_OP         | variable=t op=fmul impl=fulldsp                                                                        | in levy_moments_hls (../levy_src/levy_moments_hls.cpp:74)  |
+| BIND_OP         | variable=t2 op=fmul impl=fulldsp                                                                       | in levy_moments_hls (../levy_src/levy_moments_hls.cpp:75)  |
+| BIND_OP         | variable=tv op=fmul impl=fulldsp                                                                       | in levy_moments_hls (../levy_src/levy_moments_hls.cpp:76)  |
+| BIND_OP         | variable=u2 op=fmul impl=fulldsp                                                                       | in levy_moments_hls (../levy_src/levy_moments_hls.cpp:77)  |
+| BIND_OP         | variable=v2 op=fmul impl=fulldsp                                                                       | in levy_moments_hls (../levy_src/levy_moments_hls.cpp:78)  |
+| BIND_OP         | variable=power op=fadd impl=fulldsp                                                                    | in levy_moments_hls (../levy_src/levy_moments_hls.cpp:79)  |
+| BIND_OP         | variable=t2u op=fmul impl=fulldsp                                                                      | in levy_moments_hls (../levy_src/levy_moments_hls.cpp:80)  |
+| BIND_OP         | variable=t2power op=fmul impl=fulldsp                                                                  | in levy_moments_hls (../levy_src/levy_moments_hls.cpp:81)  |
+| BIND_OP         | variable=t3v op=fmul impl=fulldsp                                                                      | in levy_moments_hls (../levy_src/levy_moments_hls.cpp:82)  |
+| BIND_OP         | variable=updated op=fadd impl=fulldsp                                                                  | in levy_moments_hls (../levy_src/levy_moments_hls.cpp:94)  |
+| ARRAY_PARTITION | variable=sums complete dim=1                                                                           | in levy_moments_hls (../levy_src/levy_moments_hls.cpp:102) |
+| BIND_OP         | variable=reduced op=fadd impl=fulldsp                                                                  | in levy_moments_hls (../levy_src/levy_moments_hls.cpp:108) |
++-----------------+--------------------------------------------------------------------------------------------------------+------------------------------------------------------------+
+
+
