@@ -49,6 +49,7 @@ Signal_Platform/
 复现本工程需要准备：一块 **ZYNQ7020** 开发板、**AD9238** 模块、**AD9767** 模块，以及一块 **800×480 RGB565 TFT LCD** 屏幕（触控使用 IIC 通信）。板卡连线需满足引脚约束文件 `src/pl/constr/pin.xdc` 的定义。
 
 **路径要求**：工程所在路径尽量短（建议直接放在某个盘的根目录），且不要包含中文和空格。电脑上需已安装 **Vitis 26.1** 与 **Vivado 26.1**，然后按以下步骤操作。且项目文件夹名字必须是`Signal_Platform` 。
+   > **注意**：从github下载的压缩包解压后文件夹可能不是这个名字。
 
 ## 复现步骤
 1. 依次打开 `Signal_Platform` 文件夹和 `build`文件夹，双击 `build/create_vitis_workspace.bat`这个 Windows 批处理文件。
@@ -68,3 +69,4 @@ Signal_Platform/
 本工程的复现只需要 Vitis，不依赖 Vivado。若读者想查看 PL 端工程，可以运行 `build/create_vivado_project.bat`，等待 2–3 分钟，Vivado 会自动打开工程；同时在 `board` 文件夹内创建存放工程的 `board/prj` 文件夹（工程文件为 `board/prj/prj.xpr`）。
 
 更多参数与排查说明见 `build/README.md`。
+
