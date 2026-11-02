@@ -1,4 +1,4 @@
-## 本详细说明由AI生成，团队成员不保证准确性。如您需要简单版使用说明，请阅读`Software_Defined_Signal_Test_and_Validation_Platform`根目录下的`README.md`
+## 本详细说明由AI生成，团队成员不保证准确性。如您需要简单版使用说明，请阅读`Signal_Platform`根目录下的`README.md`
 
 
 
@@ -118,12 +118,14 @@ build\clean_vitis_workspace.bat --force      :: 即使 Vitis IDE 还占着也强
 
 ## 长路径 / 空格路径自动规避（重要）
 
-Windows 下 Vitis 的 BSP 编译受路径长度限制（CMake/ninja 生成的对象文件路径不能超过 260 字符），
-而且 Vitis 内部有些路径是当命令行参数传的，带**空格或中文**也会失败（典型报错
-`'standalone' is an invalid os. Valid OSes are '[]'`）。本工程默认路径已经超过安全值
-（`...\board\Vitis_WorkSpace\...` 约 105 字符），直接生成平台会报 `Invalid project location ...`。
+Windows 下 Vitis 的 BSP 编译受路径长度限制（CMake 的对象文件路径不能超过 250 字符，
+Vitis 自己也按 260 限制），而且 Vitis 内部有些路径是当命令行参数传的，带**空格或中文**
+也会失败（典型报错 `'standalone' is an invalid os. Valid OSes are '[]'`）。
 
-因此当工作区路径超过 70 字符、或含空格/中文时，脚本会自动：
+**本工程现在的路径**：`D:\Desktop\qiansai\Signal_Platform\board\Vitis_WorkSpace` 只有
+56 字符，**不会触发**自动规避，工作区就是 `board` 里的真实目录，IDE 里直接编译即可。
+
+当工作区路径超过 70 字符、或含空格/中文时（例如把工程放到很深的中文目录），脚本会自动：
 
 1. 在工程所在盘根目录建 `D:\vws\<工程名>_<短哈希>` 目录；
 2. 建一个**目录联接点**指向工程的 `board` 目录；
@@ -134,9 +136,9 @@ Windows 下 Vitis 的 BSP 编译受路径长度限制（CMake/ninja 生成的对
 工程搬家后短哈希会变，脚本会自动使用新的联接点；若工程放到短路径（如 `D:\sds\`），
 脚本会自动改用真实路径，不再建联接点。
 
-> **注意**：Vitis 用“你打开工作区时用的那个路径”去编译，不会把联接点解析回真实路径。
-> 所以请让脚本自动打开 IDE（它开的是 `D:\vws\...` 短路径）；如果手工打开
-> `board\Vitis_WorkSpace`，BSP 的对象文件路径会超过 CMake 的 250 字符上限，
+> **注意**（仅当上面那种长路径情况出现时）：Vitis 用“你打开工作区时用的那个路径”去编译，
+> 不会把联接点解析回真实路径。所以要让脚本自动打开 IDE（它开的是 `D:\vws\...` 短路径）；
+> 如果手工打开 `board\Vitis_WorkSpace`，BSP 的对象文件路径可能超过 CMake 的 250 字符上限，
 > 编译平台就会报 `Error in generating platform`。
 
 > 因为 BSP 中间文件很深，用资源管理器手动删除/移动 `board\Vitis_WorkSpace` 可能报“路径太长”。
@@ -257,7 +259,7 @@ Vitis 用一个独占的锁文件 `<工作区>\_ide\.wsdata\.lock` 表示“工�
 `board\Vitis_WorkSpace\_ide\.wsdata\.lock` 即可；或直接点弹窗里的 “Open Anyway”
 （在确认没有进程占用时，点它是安全的）。
 
-**Q：在 IDE 里点“编译平台”，只报 `Error in generating platform 'platform_v5_4'.`**
+**Q：在 IDE 里点“编译平台”，只报 `Error in generating platform 'platform'.`**
 
 这句提示底下其实有**两种完全不同的原因**，看日志里的关键字区分：
 
@@ -267,7 +269,7 @@ Vitis 用一个独占的锁文件 `<工作区>\_ide\.wsdata\.lock` 表示“工�
 
 ```
 The object file directory
-  D:/.../board/Vitis_WorkSpace/platform_v5_4/.../gen_bsp/CMakeFiles/CMakeScratch/TryCompile-xxxx/
+  D:/.../board/Vitis_WorkSpace/platform/.../gen_bsp/CMakeFiles/CMakeScratch/TryCompile-xxxx/
   has 252 characters.  The maximum full path to an object file is 250
 -- Check for working C compiler: ... - broken
 [ERROR]: Failed to configure CMake with updated BSP configurations
@@ -364,15 +366,14 @@ src\ps\
 ## 生成的工作区结构
 
 ```
-board\Vitis_WorkSpace\        （真实目录；Vitis 通过 D:\vws\<工程名>_<短哈希> 联接点访问它）
-├── platform_v5_4\            平台组件（BSP、FSBL、导出的 xpfm）
+board\Vitis_WorkSpace\        （真实目录；本工程路径 56 字符，不需要短路径联接点）
+├── platform\                 平台组件（BSP、FSBL、导出的 xpfm）
 ├── app\                      应用组件（src 为源码副本，build 下为 app.elf）
 │   └── _ide\                 调试配置、比特流、ps7_init.tcl
 └── _ide\                     Vitis 工作区元数据
 ```
 
-> BSP 的 `gen_bsp` 目录很深，路径一长 CMake 就直接拒绝编译，所以生成/编译/打开 IDE
-> 都走短路径联接点。删除请用 `clean_vitis_workspace.bat`，它会把工作区和联接点一起清掉。
+> 删除请用 `clean_vitis_workspace.bat`（BSP 中间文件路径很深，资源管理器常常删不动）。
 
 > 说明：源码以 `src\ps` 为准，每次完整生成/同步都会复制到工作区组件里编译。
 > 如果在 Vitis IDE 里直接改了代码，记得用 `--pull` 同步回 `src\ps`，否则下次

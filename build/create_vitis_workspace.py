@@ -555,7 +555,7 @@ def _default_manifest():
         "workspace": DEFAULT_WORKSPACE,
         "xsa": "system_wrapper.xsa",
         "platform": {
-            "name": "platform_v5_4",
+            "name": "platform",
             "os": "standalone",
             "cpu": "ps7_cortexa9_0",
             "domain": "standalone_ps7_cortexa9_0",
