@@ -10,7 +10,11 @@
 
 
 module accumulator_fir(
+    (* X_INTERFACE_INFO = "xilinx.com:signal:clock:1.0 sys_clk CLK" *)
+    (* X_INTERFACE_PARAMETER = "XIL_INTERFACENAME sys_clk, ASSOCIATED_BUSIF s_axis_config:s_axis_reload, ASSOCIATED_RESET sys_rst_n" *)
     input wire  sys_clk,
+    (* X_INTERFACE_INFO = "xilinx.com:signal:reset:1.0 sys_rst_n RST" *)
+    (* X_INTERFACE_PARAMETER = "XIL_INTERFACENAME sys_rst_n, POLARITY ACTIVE_LOW, INSERT_VIP 0" *)
     input wire  sys_rst_n,
     input wire  [11:0] x_data,
     
